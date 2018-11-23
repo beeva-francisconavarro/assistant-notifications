@@ -8,7 +8,7 @@ const app=dialogflow({debug : true });
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
 let count = 0;
 const insultos = 
-[' es retrasao profundo', ' es un pelahuevos', ' . Vete a zurrir mierdas con látigo.', ' es un bajapieles']
+[' . Vete a zurrir mierdas con látigo.']
 
 app.intent('chiste', conv => {
   //console.log('intent chiste');
