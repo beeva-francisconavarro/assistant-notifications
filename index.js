@@ -10,7 +10,7 @@ app.get('/', (req, res) => {
   res.json({foo: 'bar'});
 });
 
-app.listen(server_port, server_ip_address, () => {
+app.listen(server_port, () => {
   console.log('App started on port ' + server_port);
 });
 
