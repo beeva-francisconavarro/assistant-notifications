@@ -19,7 +19,7 @@ app.intent('chiste', conv => {
     count = 0;
 });
 
-//actions(app);
+actions(app);
 
 
 express().use(bodyParser.json(), app).listen(process.env.PORT || 4001);
