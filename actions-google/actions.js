@@ -12,8 +12,8 @@ module.exports = function (app) {
 
     console.log('Adding intents');
 
-    
-    app.intent('Notificaciones Bconomy - yes', conv => {
+
+    app.intent('NotificacionesBconomy.NotificacionesBconomy-yes', conv => {
         console.log('Llamada a intent Granting ticket');
 
         return apiRequests.getGrantingTicket()
