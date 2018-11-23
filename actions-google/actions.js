@@ -55,7 +55,7 @@ module.exports = function (app) {
 
                     let currentMonthBestEstimations = bestEstimations.filter(item => {
                         let estimatedDay = new Date(item.transactionDate);
-                        return estimatedDay.getMonth() === currentMonth;
+                        return estimatedDay.getMonth() === currentMonth || true;
                     });
 
                     console.log('Mejores predicciones de este mes ' + currentMonth + ': ' + JSON.stringify(currentMonthBestEstimations));
