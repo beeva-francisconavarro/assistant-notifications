@@ -1,79 +1,92 @@
-// See https://github.com/dialogflow/dialogflow-fulfillment-nodejs
-// for Dialogflow fulfillment library docs, samples, and to report issues
 'use strict';
-const {dialogflow} = require('actions-on-google');
+
+process.env.DEBUG = 'actions-on-google:*';
+
+// We need the Dialogflow App client for all the magic here
+const { DialogflowApp } = require('actions-on-google');
+// To make our http request (a bit nicer)
+const request = require('request');
+
+// the actions we are supporting (get them from api.ai)
+const ACTION_PRICE = 'price';
+const ACTION_TOTAL = 'total';
+const ACTION_BLOCK = 'block';
+const ACTION_MARKET = 'marketcap';
+const ACTION_INTERVAL = 'interval';
+
+// The end-points to our calls
+const EXT_BITCOIN_API_URL = 'https://blockchain.info';
+const EXT_PRICE = '/q/24hrprice';
+const EXT_TOTAL = '/q/totalbc';
+const EXT_BLOCK_COUNT = '/q/getblockcount';
+const EXT_MARKET_CAP = '/q/marketcap';
+const EXT_INTERVAL = '/q/interval';
+
+// [START Bitcoin Info]
+const bitcoinInfo = (req, res) => {
+  const assistant = new DialogflowApp({request: req, response: res});
+  console.log('bitcoinInfoAction Request headers: ' + JSON.stringify(req.headers));
+  console.log('bitcoinInfoAction Request body: ' + JSON.stringify(req.body));
+
+  // Fulfill price action business logic
+  function priceHandler (assistant) {
+    request(EXT_BITCOIN_API_URL + EXT_PRICE, function (error, response, body) {
+      // The fulfillment logic for returning the bitcoin current price
+      console.log('priceHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
+      const msg = 'Right now the price of a bitcoin is ' + body + ' USD. What else would you like to know?';
+      assistant.ask(msg);
+    });
+  }
+
+  // Fulfill total bitcoin action
+  function totalHandler (assistant) {
+    request(EXT_BITCOIN_API_URL + EXT_TOTAL, function (error, response, body) {
+      console.log('totalHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
+      // The fulfillment logic for returning the amount of bitcoins in the world
+      const billionsBitcoins = body / 1000000000;
+      const msg = 'Right now there are ' + billionsBitcoins + ' billion bitcoins around the world. What else would you like to know?';
+      assistant.ask(msg);
+    });
+  }
+
+  // Fulfill block count action
+  function blockCountHandler (assistant) {
+    request(EXT_BITCOIN_API_URL + EXT_BLOCK_COUNT, function (error, response, body) {
+      console.log('blockCountHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
+      const msg = 'Right now there are ' + body + ' blocks. What else would you like to know? the price?';
+      assistant.ask(msg);
+    });
+  }
+
+  // Fulfill market cap action
+  function marketCaptHandler (assistant) {
+    request(EXT_BITCOIN_API_URL + EXT_MARKET_CAP, function (error, response, body) {
+      console.log('marketCaptHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
+      const marketCapB = Math.round((body / 1000000000) * 100) / 100;
+      const msg = 'Right now market cap is ' + marketCapB + ' billions. What else would you like to know?';
+      assistant.ask(msg);
+    });
+  }
+
+  // Fulfill interval action
+  function intervalHandler (assistant) {
+    request(EXT_BITCOIN_API_URL + EXT_INTERVAL, function (error, response, body) {
+      console.log('interval response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
+      const msg = 'Right now the interval between blocks is ' + body + ' seconds. What else would you like to know?';
+      assistant.ask(msg);
+    });
+  }
+
+  // The Entry point to all our actions
+  const actionMap = new Map();
+  actionMap.set(ACTION_PRICE, priceHandler);
+  actionMap.set(ACTION_TOTAL, totalHandler);
+  actionMap.set(ACTION_BLOCK, blockCountHandler);
+  actionMap.set(ACTION_MARKET, marketCaptHandler);
+  actionMap.set(ACTION_INTERVAL, intervalHandler);
+
+  assistant.handleRequest(actionMap);
+};
+// [END Bitcoin Info]
 const functions = require('firebase-functions');
-//const d=require('date-and-time');
-const app=dialogflow({debug : true });
-// const {Card, Suggestion} = require('dialogflow-fulfillment');
-
-process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
-let count = 0;
-const insultos = 
-[' es retrasao profundo', ' es un pelahuevos', ' . Vete a zurrir mierdas con látigo.', ' es un bajapieles']
-
-app.intent('chiste', conv => {
-  //console.log('intent chiste');
-  const nombre = conv.parameters['NOMBRE'];
-  console.log(conv.parameters);
-  conv.close(nombre + insultos[count++]);
-  if(count>=insultos.length)
-    count = 0;
-});
-
-
-exports.factsAboutGoogle = functions.https.onRequest(app);
-//express().use(bodyParser.json(), app).listen(3000);
-
-//v1 --------
-// exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
-//   const agent = new WebhookClient({ request, response });
-//   console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
-//   console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
- 
-//   function welcome(agent) {
-//     agent.add(`Welcome to my agent!`);
-//   }
- 
-//   function fallback(agent) {
-//     agent.add(`I didn't understand`);
-//     agent.add(`I'm sorry, can you try again?`);
-// }
-
-//   // Uncomment and edit to make your own intent handler
-//   // uncomment `intentMap.set('your intent name here', yourFunctionHandler);`
-//   // below to get this function to be run when a Dialogflow intent is matched
-//   function chisteFunction(agent) {
-//     //agent.add(`A mi hijo le hemos puesto gafas`);
-//     //agent.add(`Coño. Que nombre más feo. `);
-//     let name;
-//     try {
-//       name = agent.getArgument( 'NOMBRE' );
-//     } catch (ex) {
-//       console.warn('Error catching name');
-//       console.warn(ex);
-//     }
-
-//     console.log(name);
-//     agent.add(`Santos es subnormal profundo. `);
-//     // agent.add(new Card({
-//     //     title: `Title: this is a card title`,
-//     //     imageUrl: 'https://developers.google.com/actions/images/badges/XPM_BADGING_GoogleAssistant_VER.png',
-//     //     text: `This is the body text of a card.  You can even use line\n  breaks and emoji! 💁`,
-//     //     buttonText: 'This is a button',
-//     //     buttonUrl: 'https://assistant.google.com/'
-//     //   })
-//     // );
-//     // agent.add(new Suggestion(`Quick Reply`));
-//     // agent.add(new Suggestion(`Suggestion`));
-//     // agent.setContext({ name: 'weather', lifespan: 2, parameters: { city: 'Rome' }});
-//   }
-
-//   // Run the proper function handler based on the matched Dialogflow intent name
-//   let intentMap = new Map();
-//   intentMap.set('Default Welcome Intent', welcome);
-//   intentMap.set('Default Fallback Intent', fallback);
-//   intentMap.set('chiste', chisteFunction);
-//   // intentMap.set('your intent name here', googleAssistantHandler);
-//   agent.handleRequest(intentMap);
-// });
+exports.bitcoinInfo = functions.https.onRequest(bitcoinInfo);
