@@ -10,7 +10,9 @@ module.exports = function (app) {
 
     //********************************************
 
+    console.log('Adding intents');
 
+    
     app.intent('Notificaciones Bconomy - yes', conv => {
         console.log('Llamada a intent Granting ticket');
 
