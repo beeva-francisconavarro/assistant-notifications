@@ -1,7 +1,7 @@
 'use strict';
 
 process.env.DEBUG = 'actions-on-google:*';
-let Assistant = require('actions-on-google').ApiAiAssistant;
+let Assistant = require('actions-on-google').ApiAiApp;
 let express = require('express');
 let bodyParser = require('body-parser');
 
