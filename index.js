@@ -2,6 +2,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const { dialogflow } = require('actions-on-google')
+const actions = require('./actions-google/actions');
 
 const app=dialogflow({debug : true });
 
@@ -11,13 +12,15 @@ const insultos =
 [' . Vete a zurrir mierdas con látigo.']
 
 app.intent('chiste', conv => {
-  //console.log('intent chiste');
   const nombre = conv.parameters['NOMBRE'];
   console.log(conv.parameters);
   conv.close(nombre + insultos[count++]);
   if(count>=insultos.length)
     count = 0;
 });
+
+actions(app);
+
 
 express().use(bodyParser.json(), app).listen(process.env.PORT || 4001);
 console.log('Started app');
