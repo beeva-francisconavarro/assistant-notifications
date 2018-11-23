@@ -1,92 +1,207 @@
 'use strict';
 
 process.env.DEBUG = 'actions-on-google:*';
+let Assistant = require('actions-on-google').ApiAiAssistant;
+let express = require('express');
+let bodyParser = require('body-parser');
 
-// We need the Dialogflow App client for all the magic here
-const { DialogflowApp } = require('actions-on-google');
-// To make our http request (a bit nicer)
-const request = require('request');
+let app = express();
+app.use(bodyParser.json({type: 'application/json'}));
 
-// the actions we are supporting (get them from api.ai)
-const ACTION_PRICE = 'price';
-const ACTION_TOTAL = 'total';
-const ACTION_BLOCK = 'block';
-const ACTION_MARKET = 'marketcap';
-const ACTION_INTERVAL = 'interval';
+// API.AI actions
+const UNRECOGNIZED_DEEP_LINK = 'deeplink.unknown';
+const SAY_CAT_FACT = 'say_cat_fact';
+const SAY_GOOGLE_FACT = 'say_google_fact';
+const CHISTE = 'chiste';
 
-// The end-points to our calls
-const EXT_BITCOIN_API_URL = 'https://blockchain.info';
-const EXT_PRICE = '/q/24hrprice';
-const EXT_TOTAL = '/q/totalbc';
-const EXT_BLOCK_COUNT = '/q/getblockcount';
-const EXT_MARKET_CAP = '/q/marketcap';
-const EXT_INTERVAL = '/q/interval';
+// API.AI parameter names
+const CATEGORY_ARGUMENT = 'category';
 
-// [START Bitcoin Info]
-const bitcoinInfo = (req, res) => {
-  const assistant = new DialogflowApp({request: req, response: res});
-  console.log('bitcoinInfoAction Request headers: ' + JSON.stringify(req.headers));
-  console.log('bitcoinInfoAction Request body: ' + JSON.stringify(req.body));
+// API.AI Contexts/lifespans
+const GOOGLE_CONTEXT = 'google-facts';
+const CAT_CONTEXT = 'cat-facts';
+const DEFAULT_LIFESPAN = 5;
+const END_LIFESPAN = 0;
 
-  // Fulfill price action business logic
-  function priceHandler (assistant) {
-    request(EXT_BITCOIN_API_URL + EXT_PRICE, function (error, response, body) {
-      // The fulfillment logic for returning the bitcoin current price
-      console.log('priceHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
-      const msg = 'Right now the price of a bitcoin is ' + body + ' USD. What else would you like to know?';
-      assistant.ask(msg);
-    });
+const FACT_TYPE = {
+  HISTORY: 'history',
+  HEADQUARTERS: 'headquarters',
+  CATS: 'cats'
+};
+
+const HISTORY_FACTS = new Set([
+  'Google was founded in 1998.',
+  'Google was founded by Larry Page and Sergey Brin.',
+  'Google went public in 2004.',
+  'Google has more than 70 offices in more than 40 countries.'
+]);
+
+const HQ_FACTS = new Set([
+  'Google\'s headquarters is in Mountain View, California.',
+  'Google has over 30 cafeterias in its main campus.',
+  'Google has over 10 fitness facilities in its main campus.'
+]);
+
+const CAT_FACTS = new Set([
+  'Cats are animals.',
+  'Cats have nine lives.',
+  'Cats descend from other cats.'
+]);
+
+const NEXT_FACT_DIRECTIVE = ' Would you like to hear another fact?';
+
+// This sample uses this sound from Freesound:
+// 'cat meow' by tuberatanka (https://www.freesound.org/people/tuberatanka/sounds/110011/)
+const MEOW_SRC = 'https://freesound.org/data/previews/110/110011_1537422-lq.mp3';
+
+function getRandomFact (facts) {
+  if (facts.size <= 0) {
+    return null;
   }
 
-  // Fulfill total bitcoin action
-  function totalHandler (assistant) {
-    request(EXT_BITCOIN_API_URL + EXT_TOTAL, function (error, response, body) {
-      console.log('totalHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
-      // The fulfillment logic for returning the amount of bitcoins in the world
-      const billionsBitcoins = body / 1000000000;
-      const msg = 'Right now there are ' + billionsBitcoins + ' billion bitcoins around the world. What else would you like to know?';
-      assistant.ask(msg);
-    });
+  let randomIndex = (Math.random() * (facts.size - 1)).toFixed();
+  let randomFactIndex = parseInt(randomIndex, 10);
+  let counter = 0;
+  let randomFact = '';
+  for (let fact of facts.values()) {
+    if (counter === randomFactIndex) {
+      randomFact = fact;
+      break;
+    }
+    counter++;
+  }
+  facts.delete(randomFact);
+  return randomFact;
+}
+
+// [START google_facts]
+app.post('/', function (req, res) {
+  const assistant = new Assistant({request: req, response: res});
+  console.log('Request headers: ' + JSON.stringify(req.headers));
+  console.log('Request body: ' + JSON.stringify(req.body));
+
+  // Greet the user and direct them to next turn
+  function unhandledDeepLinks (assistant) {
+    assistant.ask(`Welcome to Facts about Google! I'd really rather \
+      not talk about ${assistant.getRawInput()}. \
+      Wouldn't you rather talk about Google? I can tell you about \
+      Google's history or its headquarters. Which do you want to hear about?`);
   }
 
-  // Fulfill block count action
-  function blockCountHandler (assistant) {
-    request(EXT_BITCOIN_API_URL + EXT_BLOCK_COUNT, function (error, response, body) {
-      console.log('blockCountHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
-      const msg = 'Right now there are ' + body + ' blocks. What else would you like to know? the price?';
-      assistant.ask(msg);
-    });
+  // Say a Google fact
+  function tellGoogleFact (assistant) {
+    let historyFacts = assistant.data.historyFacts
+      ? new Set(assistant.data.historyFacts) : HISTORY_FACTS;
+    let hqFacts = assistant.data.hqFacts
+      ? new Set(assistant.data.hqFacts) : HQ_FACTS;
+
+    if (historyFacts.size === 0 && hqFacts.size === 0) {
+      assistant.tell('Actually it looks like you heard it all. ' +
+        'Thanks for listening!');
+      return;
+    }
+
+    let factCategory = assistant.getArgument(CATEGORY_ARGUMENT);
+
+    if (factCategory === FACT_TYPE.HISTORY) {
+      let fact = getRandomFact(historyFacts);
+      if (fact === null) {
+        assistant.ask(noFactsLeft(assistant, factCategory,
+            FACT_TYPE.HEADQUARTERS));
+        return;
+      }
+
+      let factPrefix = 'Sure, here\'s a history fact. ';
+      assistant.data.historyFacts = Array.from(historyFacts);
+      assistant.ask(factPrefix + fact + NEXT_FACT_DIRECTIVE);
+      return;
+    } else if (factCategory === FACT_TYPE.HEADQUARTERS) {
+      let fact = getRandomFact(hqFacts);
+      if (fact === null) {
+        assistant.ask(noFactsLeft(assistant, factCategory,
+            FACT_TYPE.HISTORY));
+        return;
+      }
+
+      let factPrefix = 'Okay, here\'s a headquarters fact. ';
+      assistant.data.hqFacts = Array.from(hqFacts);
+      assistant.ask(factPrefix + fact + NEXT_FACT_DIRECTIVE);
+      return;
+    } else {
+      // Conversation repair is handled in API.AI, but this is a safeguard
+      assistant.ask(`Sorry, I didn't understand. I can tell you about \
+        Google's history, or its headquarters. Which one do you want to \
+        hear about?`);
+    }
   }
 
-  // Fulfill market cap action
-  function marketCaptHandler (assistant) {
-    request(EXT_BITCOIN_API_URL + EXT_MARKET_CAP, function (error, response, body) {
-      console.log('marketCaptHandler response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
-      const marketCapB = Math.round((body / 1000000000) * 100) / 100;
-      const msg = 'Right now market cap is ' + marketCapB + ' billions. What else would you like to know?';
-      assistant.ask(msg);
-    });
+  // Say a cat fact
+  function tellCatFact (assistant) {
+    let catFacts = assistant.data.catFacts
+        ? new Set(assistant.data.catFacts) : CAT_FACTS;
+    let fact = getRandomFact(catFacts);
+    if (fact === null) {
+      let parameters = {};
+      // Add google-facts context to outgoing context list
+      assistant.setContext(GOOGLE_CONTEXT, DEFAULT_LIFESPAN,
+        parameters);
+      // Replace outgoing cat-facts context with lifespan = 0 to end it
+      assistant.setContext(CAT_CONTEXT, END_LIFESPAN, {});
+      assistant.ask('Looks like you\'ve heard all there is to know ' +
+        'about cats. Would you like to hear about Google?');
+      return;
+    }
+
+    let factPrefix = 'Alright, here\'s a cat fact. ' +
+      '<audio src="' + MEOW_SRC + '"></audio>';
+    let factSpeech = '<speak>' + factPrefix + fact +
+      NEXT_FACT_DIRECTIVE + '</speak>';
+    assistant.data.catFacts = Array.from(catFacts);
+    assistant.ask(factSpeech);
+    return;
   }
 
-  // Fulfill interval action
-  function intervalHandler (assistant) {
-    request(EXT_BITCOIN_API_URL + EXT_INTERVAL, function (error, response, body) {
-      console.log('interval response: ' + JSON.stringify(response) + ' Body: ' + body + ' | Error: ' + error);
-      const msg = 'Right now the interval between blocks is ' + body + ' seconds. What else would you like to know?';
-      assistant.ask(msg);
-    });
+  let count = 0;
+  const insultos = 
+    [' es retrasao profundo', ' es un pelahuevos', ' . Vete a zurrir mierdas con látigo.', ' es un bajapieles'];
+  function chiste () {
+    assistant.ask(insultos[count++]);
   }
 
-  // The Entry point to all our actions
-  const actionMap = new Map();
-  actionMap.set(ACTION_PRICE, priceHandler);
-  actionMap.set(ACTION_TOTAL, totalHandler);
-  actionMap.set(ACTION_BLOCK, blockCountHandler);
-  actionMap.set(ACTION_MARKET, marketCaptHandler);
-  actionMap.set(ACTION_INTERVAL, intervalHandler);
+  // Say they've heard it all about this category
+  function noFactsLeft (assistant, currentCategory, redirectCategory) {
+    let parameters = {};
+    parameters[CATEGORY_ARGUMENT] = redirectCategory;
+    // Replace the outgoing google-facts context with different parameters
+    assistant.setContext(GOOGLE_CONTEXT, DEFAULT_LIFESPAN,
+        parameters);
+    let response = `Looks like you've heard all there is to know \
+        about the ${currentCategory} of Google. Would you like to hear \
+        about its ${redirectCategory}? `;
+    if (!assistant.data.catFacts || assistant.data.catFacts.length > 0) {
+      response += 'By the way, I can tell you about cats too.';
+    }
+    return response;
+  }
+
+  let actionMap = new Map();
+  actionMap.set(UNRECOGNIZED_DEEP_LINK, unhandledDeepLinks);
+  actionMap.set(SAY_GOOGLE_FACT, tellGoogleFact);
+  actionMap.set(SAY_CAT_FACT, tellCatFact);
+  actionMap.set(CHISTE, chiste);
 
   assistant.handleRequest(actionMap);
-};
-// [END Bitcoin Info]
-const functions = require('firebase-functions');
-exports.bitcoinInfo = functions.https.onRequest(bitcoinInfo);
+});
+// [END google_facts]
+
+if (module === require.main) {
+  // [START server]
+  // Start the server
+  let server = app.listen(process.env.PORT || 4001, function () {
+    let port = server.address().port;
+    console.log('App listening on port %s', port);
+  });
+  // [END server]
+}
+
+module.exports = app;
