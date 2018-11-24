@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express')
 const bodyParser = require('body-parser')
-const { dialogflow } = require('actions-on-google')
+const { dialogflow, SignIn } = require('actions-on-google')
 const actions = require('./actions-google/actions');
 
 const app=dialogflow({debug : true });
@@ -11,21 +11,26 @@ let count = 0;
 const insultos = 
 [' . Vete a zurrir mierdas con látigo.']
 
-app.intent('chiste', (conv, params, signin) => {
-  
+console.log(app.getSignInStatus);
+console.log(actions.SignIn);
 
+app.intent('chiste', (conv, params, signin) => {
+
+  console.log('sign param '+JSON.stringify(signin));
   
-    console.log('Sign in status ' + app.getSignInStatus() === app.SignInStatus.OK);
-    if (signin.status === "OK") {
-      const nombre = conv.parameters['NOMBRE'];
-      console.log(conv.parameters);
-      conv.close(nombre + insultos[count++]);
-      if(count>=insultos.length)
-        count = 0;
-    } else {
-      //conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
-      app.askForSignIn();
-    }
+  conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+  
+    // console.log('Sign in status ' + app.getSignInStatus() === app.SignInStatus.OK);
+    // if (signin.status === "OK") {
+    //   const nombre = conv.parameters['NOMBRE'];
+    //   console.log(conv.parameters);
+    //   conv.close(nombre + insultos[count++]);
+    //   if(count>=insultos.length)
+    //     count = 0;
+    // } else {
+    //   //conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+    //   app.askForSignIn();
+    // }
 });
 
 actions(app);
