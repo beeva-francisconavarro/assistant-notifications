@@ -16,19 +16,19 @@ app.intent('chiste', (conv, params, signin) => {
 
   console.log('sign param '+JSON.stringify(signin));
   
-  conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
-  
-    // console.log('Sign in status ' + app.getSignInStatus() === app.SignInStatus.OK);
-    // if (signin.status === "OK") {
-    //   const nombre = conv.parameters['NOMBRE'];
-    //   console.log(conv.parameters);
-    //   conv.close(nombre + insultos[count++]);
-    //   if(count>=insultos.length)
-    //     count = 0;
-    // } else {
-    //   //conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
-    //   app.askForSignIn();
-    // }
+  // conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+    console.log(JSON.stringify(signin));
+    console.log('Sign in status ' + app.getSignInStatus() === app.SignInStatus.OK);
+    if (signin.status === "OK") {
+      const nombre = conv.parameters['NOMBRE'];
+      console.log(conv.parameters);
+      conv.close(nombre + insultos[count++]);
+      if(count>=insultos.length)
+        count = 0;
+    } else {
+      //conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+      app.askForSignIn();
+    }
 });
 
 actions(app);
