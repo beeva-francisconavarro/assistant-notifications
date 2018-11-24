@@ -22,7 +22,10 @@ app.intent('chiste', conv => {
 actions(app);
 
 
-express().use('/actions', bodyParser.json(), app).listen(process.env.PORT || 4001);
+express()
+  .use('/actions', bodyParser.json(), app)
+  .use('/auth', express.static('auth'))
+  .listen(process.env.PORT || 4001);
 console.log('Started app');
 
 module.exports = app;

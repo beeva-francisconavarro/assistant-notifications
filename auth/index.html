@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <script src="index.js" type="script/javascript"></script>
+  </head>
+  <body style="font-size:24px;">
+    formulario auth
+    <br>
+    <script>
+      var query = window.location.href.replace(/.*\?/, '').split('&');
+      
+      query.map(item => document.writeln(`<div>${item}</div>`));
+    </script>
+  </body>
+</html>
