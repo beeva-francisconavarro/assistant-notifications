@@ -1,13 +1,34 @@
 <html>
   <head>
     <script src="index.js" type="script/javascript"></script>
+    <script>
+      var query = window.location.href.replace(/.*\?/, '').split('&');
+      var params = query.reduce((obj, pair) => {
+          var values = pair.split('=');
+          obj[values[0]] = values[1];
+      return obj;
+      }, {});
+      function redirect () {
+        var generatedACCESS_TOKEN = '12345';
+        if (params.client_id = 'googlebiconomi' ) {
+          window.location =  params.redirect_uri
+            + `#access_token=${generatedACCESS_TOKEN}&token_type=bearer&state=${params.state}`
+        }
+      }
+    </script>
   </head>
   <body style="font-size:24px;">
     formulario auth
+
     <br>
+    <br><br>
+
+    <form>
+
+      <input type="button" onclick="redirect()" value="ACCEDER" style="border:1px solid black;padding:2em;"/>
+    </form>
+    <br><br>
     <script>
-      var query = window.location.href.replace(/.*\?/, '').split('&');
-      
       query.map(item => document.writeln(`<div>${item}</div>`));
     </script>
   </body>

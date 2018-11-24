@@ -11,8 +11,6 @@ let count = 0;
 const insultos = 
 [' . Vete a zurrir mierdas con látigo.']
 
-console.log(app.getSignInStatus);
-console.log(actions.SignIn);
 
 app.intent('chiste', (conv, params, signin) => {
 
