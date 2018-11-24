@@ -11,12 +11,20 @@ let count = 0;
 const insultos = 
 [' . Vete a zurrir mierdas con látigo.']
 
-app.intent('chiste', conv => {
-  const nombre = conv.parameters['NOMBRE'];
-  console.log(conv.parameters);
-  conv.close(nombre + insultos[count++]);
-  if(count>=insultos.length)
-    count = 0;
+app.intent('chiste', (conv, params, signin) => {
+  
+
+  
+
+    if (signin.status === "OK") {
+      const nombre = conv.parameters['NOMBRE'];
+      console.log(conv.parameters);
+      conv.close(nombre + insultos[count++]);
+      if(count>=insultos.length)
+        count = 0;
+    } else {
+      conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+    }
 });
 
 actions(app);
