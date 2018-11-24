@@ -15,11 +15,10 @@ const insultos =
 app.intent('chiste', conv => {
 
     console.log(`sign ` + JSON.stringify(conv.user.access));
-    console.log('\nSign in status ' + app.getSignInStatus() === app.SignInStatus.OK);
-    if (signin.status === "OK") {
+    if (conv.user.access && conv.user.access.length) {
       const nombre = conv.parameters['NOMBRE'];
       console.log(conv.parameters);
-      conv.close(nombre + insultos[count++]);
+      conv.ask(nombre + insultos[count++]);
       if(count>=insultos.length)
         count = 0;
     } else {
