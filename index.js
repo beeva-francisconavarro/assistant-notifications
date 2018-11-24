@@ -4,7 +4,7 @@ const bodyParser = require('body-parser')
 const { dialogflow, SignIn } = require('actions-on-google')
 const actions = require('./actions-google/actions');
 
-const app=dialogflow({debug : true });
+const app=dialogflow({debug : false });
 
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
 let count = 0;

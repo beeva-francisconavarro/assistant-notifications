@@ -40,7 +40,7 @@ module.exports = function (app) {
                     console.log('Respuesta de apiRequest de predicciones: ' + JSON.stringify(response));
                     //Lógica de estimaciones a recuperar (Filtrados)
                     let allEstimations = response.estimatedTransactions;
-                    console.log('Predicciones obtenidas: ' + JSON.stringify(allEstimations));
+                    console.log('Predicciones obtenidas: ' /*+ JSON.stringify(allEstimations)*/);
 
                     let today = new Date();
                     let currentMonth = today.getMonth();
@@ -51,14 +51,14 @@ module.exports = function (app) {
                         return item.movementReliability.name === 'ALTA'
                     });
 
-                    console.log('Mejores predicciones: ' + JSON.stringify(bestEstimations));
+                    console.log('Mejores predicciones: ');// + JSON.stringify(bestEstimations));
 
                     let currentMonthBestEstimations = bestEstimations.filter(item => {
                         let estimatedDay = new Date(item.transactionDate);
                         return estimatedDay.getMonth() === currentMonth || true;
                     });
 
-                    console.log('Mejores predicciones de este mes ' + currentMonth + ': ' + JSON.stringify(currentMonthBestEstimations));
+                    console.log('Mejores predicciones de este mes ' + currentMonth + ': ' );//+ JSON.stringify(currentMonthBestEstimations));
 
                     let [entriesEstimations, expensesEstimations] =
                         currentMonthBestEstimations.reduce((result, item) => {
@@ -66,8 +66,8 @@ module.exports = function (app) {
                             return result;
                         }, [[], []]);
 
-                    console.log('Predicciones de ingresos: ' + JSON.stringify(entriesEstimations));
-                    console.log('Predicciones de gastos: ' + JSON.stringify(expensesEstimations));
+                    console.log('Predicciones de ingresos: ' );// + JSON.stringify(entriesEstimations));
+                    console.log('Predicciones de gastos: ' );//+ JSON.stringify(expensesEstimations));
 
                     //Construcción de mensaje de usuario
                     let responseToUser;
