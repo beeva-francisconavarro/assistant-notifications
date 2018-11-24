@@ -15,7 +15,7 @@ const insultos =
 app.intent('chiste', conv => {
 
     console.log(`sign ` + JSON.stringify(conv.user.access));
-    if (conv.user.access && conv.user.access.length) {
+    if (conv.user.access && conv.user.access.token && conv.user.access.token.length) {
       const nombre = conv.parameters['NOMBRE'];
       console.log(conv.parameters);
       conv.ask(nombre + insultos[count++]);
