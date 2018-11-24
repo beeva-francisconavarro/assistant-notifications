@@ -12,13 +12,9 @@ const insultos =
 [' . Vete a zurrir mierdas con látigo.']
 
 
-app.intent('chiste', (conv, params, signin) => {
+app.intent('chiste', conv => {
 
-  console.log('sign param '+JSON.stringify(signin));
-  
-  // conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
-
-    console.log(`sign ` + JSON.stringify(conv.user));
+    console.log(`sign ` + JSON.stringify(conv.user.access));
     console.log('\nSign in status ' + app.getSignInStatus() === app.SignInStatus.OK);
     if (signin.status === "OK") {
       const nombre = conv.parameters['NOMBRE'];
