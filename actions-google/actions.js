@@ -27,7 +27,6 @@ module.exports = function (app) {
     if (getToken(conv)) {
       return getMovements(token).then(movements => {
         if (movements.incomes.length || movements.expenses.length) {
-          conv.ask('Mejores predicciones de este mes:');
           movements.incomes.forEach(mov => {
             conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente`);
           });
