@@ -27,6 +27,10 @@ app.intent('chiste', conv => {
     }
 });
 
+app.intent('actions.intent.MAIN', conv => {
+  conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+})
+
 actions(app);
 
 
