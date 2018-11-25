@@ -31,7 +31,7 @@ module.exports = function (app) {
           movements.incomes.forEach(mov => {
             conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente`);
           });
-          movements.incomes.forEach(mov => {
+          movements.expenses.forEach(mov => {
             conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a tener un gastos de ${mov.subcategory} con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente`);
           });
         } else {
