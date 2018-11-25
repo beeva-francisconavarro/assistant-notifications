@@ -34,9 +34,10 @@ function login (username, password, res) {
       if (response.code === 200) {
         token = jwt.encode({ customerId }, secret);
         tsec = response.tsec;
+        customerId = response.customerId;
         return {
-          tsec: response.tsec,
-          customerId: response.customerId,
+          tsec,
+          customerId,
           token
         };
       }
@@ -49,7 +50,9 @@ function login (username, password, res) {
       }
       throw ProductNotFound;
     }).then(response => {
-      console.log(response);
+      if (response.estimatedTransactions) {
+        saveTransactions(customerId, token, response.estimatedTransactions);
+      }
       res.json({ generatedAccessToken: token });
       res.status(200).end();
     }).catch(err => {
@@ -59,8 +62,19 @@ function login (username, password, res) {
     });
 }
 
-function saveLoginTransactions (customerId, token) {
+function saveTransactions (customerId, token, transactions) {
   console.log('Customer id obtenido ' + customerId);
-  const transaction = new db.EstimatedTransactions({ token: token });
-  return transaction.save();
+  Promise.all(
+    transactions.filter(t => t.forecastedReliability.id === 'T1').map(transaction =>
+      (new db.EstimatedTransactions({
+        token: token,
+        customerId,
+        transaction,
+        humanConceptName: transaction.humanConceptName,
+        dateRange: transaction.dateRange.minimumRangeDate,
+        amount: transaction.amount.amount,
+        category: transaction.humanCategory.name,
+        subcategory: transaction.humanSubcategory.name
+      })).save()
+    )).then(() => console.log('transactions saved'));
 }
