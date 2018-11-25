@@ -1,0 +1,34 @@
+body {
+  font-size: 1.5rem;
+  text-align: center;
+  background-color: #004481;
+  color: #fff;
+  font-family: tahoma;
+  width: 100%;
+  margin: 0;
+}
+input {
+  padding: 0.5em;
+  margin: 1em;
+  background-color: #1973B8;
+  border: 0px;
+  color:  #fff;
+}
+.svg-header {
+  display: inline-block;
+  text-align: center;
+  background-color: #043263;
+  width: 95%;
+  padding: 1em;
+}
+.row {
+  margin-top: 1em;
+}
+.btn-acceder{
+  background-color: #02a5a5;
+  color: #fff;
+  padding: 0.5em;
+  font-weight: 800;
+  width: 90%;
+  font-size: 1.5rem;
+}

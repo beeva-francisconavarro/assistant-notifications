@@ -2,23 +2,29 @@
   <head>
     <script src="index.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script>
-      
-    </script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=0,minimal-ui,viewport-fit=cover">
   </head>
-  <body style="font-size:24px;">
-    formulario auth
-
-    <br>
-    <br><br>
+  <body content="initial-scale=1.0, width=device-width">
+    <div class="svg-header">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="293 284.9 866 270" style="height:1em" class="svg-bbva-logo" fill="#fff">
+        <title>BBVA</title>
+        <path d="M633 554.9H521v-270h116c56 0 74 46 46 86l-12 20c92 48 62 164-38 164zm-12-150l22-34c6-8 6-14 6-20 0-16-14-30-30-30h-36v198h20c32 0 56-18 56-58 0-34-16-52-38-56zm-214 150H293v-270h118c54 0 74 46 46 86l-14 20c92 48 62 164-36 164zm-14-150l22-34c6-8 8-14 8-20 0-16-16-30-32-30h-34v198h18c32 0 56-18 56-58 0-34-14-52-38-56zm508-120h42l-82 270h-64l-88-268 48-2c18 0 22 6 32 36l50 170 62-206zm176 28c-8-22-12-26-32-26h-52l-82 268h42l18-58h98l18 58h72l-82-242zm-94 144l36-122 38 122h-74z"></path>
+      </svg>
+    </div>
 
     <form>
-
-      <input type="button" onclick="redirect()" value="ACCEDER" style="border:1px solid black;padding:2em;"/>
+      <div class="row">
+        Usuario
+        <br>
+        <input type="text" id="username"/>
+      </div>
+      <div class="row">
+        Contraseña
+        <br>
+        <input type="password" id="password"/>
+      </div>
+      <input class="btn-acceder" type="button" onclick="redirect()" value="Iniciar sesión"/>
     </form>
-    <br><br>
-    <script>
-      query.map(item => document.writeln(`<div>${item}</div>`));
-    </script>
   </body>
 </html>
