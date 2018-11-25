@@ -4,13 +4,11 @@ const bodyParser = require('body-parser');
 const { dialogflow } = require('actions-on-google');
 const actions = require('./actions-google/actions');
 
-const app=dialogflow({debug : false });
+const app = dialogflow({ debug: false });
 
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
 
-
 actions(app);
-
 
 express()
   .use('/actions', bodyParser.json(), app)

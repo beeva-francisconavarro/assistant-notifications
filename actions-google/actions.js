@@ -1,195 +1,191 @@
-const responseMapper = require('./lib/responseMapper');
-const apiRequests = require('./lib/apiRequests');
-const config = require('./config/config');
+const responseMapper = require('../lib/responseMapper');
+const apiRequests = require('../lib/apiRequests');
 const { SignIn } = require('actions-on-google');
 
 module.exports = function (app) {
+  let customerId;
+  let tsec;
 
-    let userId;
-    let customerId;
-    let tsec;
+  //* *******************************************
 
-    //********************************************
+  let count = 0;
+  const insultos =
+        [', Vete a zurrir mierdas con látigo.', ' no hace tests.'];
 
-    let count = 0;
-    const insultos = 
-        [', Vete a zurrir mierdas con látigo.', ' no hace tests.']
+  app.intent('chiste', conv => {
+    console.log(`sign ` + JSON.stringify(conv.user.access));
+    if (conv.user.access && conv.user.access.token && conv.user.access.token.length) {
+      const nombre = conv.parameters['NOMBRE'];
+      console.log(conv.parameters);
+      conv.ask(nombre + insultos[count++]);
+      if (count >= insultos.length) {
+        count = 0;
+      }
+    } else {
+      conv.ask(new SignIn('Necesito hacer login para continuar'));
+    }
+  });
 
+  app.intent('Notificaciones Bconomy - yes', conv => {
+    console.log('Llamada a intent Granting ticket');
 
-
-    app.intent('chiste', conv => {
-
-        console.log(`sign ` + JSON.stringify(conv.user.access));
-        if (conv.user.access && conv.user.access.token && conv.user.access.token.length) {
-            const nombre = conv.parameters['NOMBRE'];
-            console.log(conv.parameters);
-            conv.ask(nombre + insultos[count++]);
-            if(count>=insultos.length)
-                count = 0;
+    return apiRequests.getGrantingTicket()
+      .then(function (response) {
+        if (response.code === 200) {
+          tsec = response.tsec;
+          customerId = response.customerId;
+          console.log('Parámetros desde ticket obtenidos');
+          return apiRequests.getProductsCustomization(customerId, tsec);
         } else {
-            conv.ask(new actions.SignIn("Necesito hacer login para continuar"));
+          console.log('Problema al recuperar datos de ticket');
+          responseMapper.sendGoogleResponse(conv, 'Obtención de tickets: ' + response.description);
         }
-    });
+      }).then(function (response) {
+        if (response.code === 200) {
+          let products = response.products;
+          console.log('Parámetros desde selección de productos obtenidos');
+          return apiRequests.getEstimatedTransactions(products, tsec);
+        } else {
+          console.log('Problema al recuperar datos de selección de predicciones');
+          responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
+        }
+      }).then(function (response) {
+        if (response.code === 200) {
+          console.log('Respuesta de apiRequest de predicciones: ' + JSON.stringify(response));
+          // Lógica de estimaciones a recuperar (Filtrados)
+          let allEstimations = response.estimatedTransactions;
+          console.log('Predicciones obtenidas: ' + JSON.stringify(allEstimations));
 
-    
-    app.intent('Notificaciones Bconomy - yes', conv => {
-        console.log('Llamada a intent Granting ticket');
+          let today = new Date();
+          let currentMonth = today.getMonth();
 
-        return apiRequests.getGrantingTicket()
-            .then( function (response) {
-                if (response.code === 200) {
-                    tsec = response.tsec;
-                    customerId = response.customerId;
-                    console.log('Parámetros desde ticket obtenidos');
-                    return apiRequests.getProductsCustomization(customerId, tsec);
-                } else {
-                    console.log('Problema al recuperar datos de ticket');
-                    responseMapper.sendGoogleResponse(conv, 'Obtención de tickets: ' + response.description);
-                }
-            }).then( function (response) {
-                if (response.code === 200) {
-                    let products = response.products;
-                    console.log('Parámetros desde selección de productos obtenidos');
-                    return apiRequests.getEstimatedTransactions(products, tsec);
-                } else {
-                    console.log('Problema al recuperar datos de selección de predicciones');
-                    responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
-            }}).then( function (response) {
-                if (response.code === 200) {
-                    console.log('Respuesta de apiRequest de predicciones: ' + JSON.stringify(response));
-                    //Lógica de estimaciones a recuperar (Filtrados)
-                    let allEstimations = response.estimatedTransactions;
-                    console.log('Predicciones obtenidas: ' + JSON.stringify(allEstimations));
+          let bestEstimations = allEstimations.filter(item => {
+            return item.forecastedReliability.id === 'T1';
+          }).filter(item => {
+            return item.movementReliability.name === 'ALTA';
+          });
 
-                    let today = new Date();
-                    let currentMonth = today.getMonth();
+          console.log('Mejores predicciones: ' + JSON.stringify(bestEstimations));
 
-                    let bestEstimations = allEstimations.filter(item => {
-                        return item.forecastedReliability.id === 'T1'
-                    }).filter(item => {
-                        return item.movementReliability.name === 'ALTA'
-                    });
+          let currentMonthBestEstimations = bestEstimations.filter(item => {
+            let estimatedDay = new Date(item.transactionDate);
+            return estimatedDay.getMonth() === currentMonth || true;
+          });
 
-                    console.log('Mejores predicciones: ' + JSON.stringify(bestEstimations));
+          console.log('Mejores predicciones de este mes ' + currentMonth + ': ' + JSON.stringify(currentMonthBestEstimations));
 
-                    let currentMonthBestEstimations = bestEstimations.filter(item => {
-                        let estimatedDay = new Date(item.transactionDate);
-                        return estimatedDay.getMonth() === currentMonth || true;
-                    });
-
-                    console.log('Mejores predicciones de este mes ' + currentMonth + ': ' + JSON.stringify(currentMonthBestEstimations));
-
-                    let [entriesEstimations, expensesEstimations] =
+          let [entriesEstimations, expensesEstimations] =
                         currentMonthBestEstimations.reduce((result, item) => {
-                            result[item.humanCategory.name === 'Ingresos'? 0:1].push(item);
-                            return result;
+                          result[item.humanCategory.name === 'Ingresos' ? 0 : 1].push(item);
+                          return result;
                         }, [[], []]);
 
-                    console.log('Predicciones de ingresos: ' + JSON.stringify(entriesEstimations));
-                    console.log('Predicciones de gastos: ' + JSON.stringify(expensesEstimations));
+          console.log('Predicciones de ingresos: ' + JSON.stringify(entriesEstimations));
+          console.log('Predicciones de gastos: ' + JSON.stringify(expensesEstimations));
 
-                    //Construcción de mensaje de usuario
-                    let responseToUser;
-                    if(entriesEstimations.length > 0) {
-                        let firstEstimation = entriesEstimations[0];
-                        let entryDate = firstEstimation.transactionDate;
-                        let concept = firstEstimation.humanConceptName;
-                        let amount = firstEstimation.amount.amount;
+          // Construcción de mensaje de usuario
+          let responseToUser;
+          if (entriesEstimations.length > 0) {
+            let firstEstimation = entriesEstimations[0];
+            let entryDate = firstEstimation.transactionDate;
+            let concept = firstEstimation.humanConceptName;
+            let amount = firstEstimation.amount.amount;
 
-                        responseToUser = 'El próximo ' + entryDate.toLocaleString('es-ES', { timeZone: 'UTC' }) +
+            responseToUser = 'El próximo ' + entryDate.toLocaleString('es-ES', { timeZone: 'UTC' }) +
                             ' vas a recibir un ingreso con concepto ' + concept.lowerCase() + ' de unos ' + amount + ' euros aproximadamente';
-                    } else {
-                        responseToUser = 'No tienes ninguna previsión para este mes';
-                    }
+          } else {
+            responseToUser = 'No tienes ninguna previsión para este mes';
+          }
 
-                    responseMapper.sendGoogleResponse(conv, responseToUser);
-                } else {
-                    console.log('Problema al recuperar datos de predicciones');
-                    responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
-            }});
+          responseMapper.sendGoogleResponse(conv, responseToUser);
+        } else {
+          console.log('Problema al recuperar datos de predicciones');
+          responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
+        }
+      });
+  });
 
-    });
+  app.intent('Notificaciones Bconomy - Repeat', conv => {
+    console.log('Llamada a intent repeat');
 
-    app.intent('Notificaciones Bconomy - Repeat', conv => {
-        console.log('Llamada a intent repeat');
+    let msg = tsec ? 'informado' : 'no informado';
+    console.log('Llamada con customerId: ' + customerId);
+    console.log('Llamada con tsec ' + msg);
+    if (tsec && customerId) {
+      return apiRequests.getProductsCustomization(customerId, tsec).then(function (response) {
+        if (response.code === 200) {
+          let products = response.products;
+          console.log('Parámetros desde selección de productos obtenidos');
+          responseMapper.sendGoogleResponse(conv, response.description + ' con resultado: ' + products);
+        } else {
+          console.log('Problema al recuperar datos de selección de productos');
+          responseMapper.sendGoogleResponse(conv, 'Listado de productos: ' + response.description);
+        }
+      }).then(function (response) {
+        if (response.code === 200) {
+          let products = response.products;
+          console.log('Parámetros desde selección de productos obtenidos');
+          return apiRequests.getEstimatedTransactions(products, tsec);
+        } else {
+          console.log('Problema al recuperar datos de selección de predicciones');
+          responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
+        }
+      }).then(function (response) {
+        if (response.code === 200) {
+          console.log('Respuesta de apiRequest de predicciones: ' + JSON.stringify(response));
+          // Lógica de estimaciones a recuperar (Filtrados)
+          let allEstimations = response.estimatedTransactions;
+          console.log('Predicciones obtenidas: ' + JSON.stringify(allEstimations));
 
-        let msg = tsec?'informado':'no informado';
-        console.log('Llamada con customerId: ' + customerId);
-        console.log('Llamada con tsec ' + msg);
-        if(tsec && customerId) {
-            return apiRequests.getProductsCustomization(customerId, tsec).then(function (response) {
-                if (response.code === 200) {
-                    let products = response.products;
-                    console.log('Parámetros desde selección de productos obtenidos');
-                    responseMapper.sendGoogleResponse(conv, response.description + ' con resultado: ' + products);
-                } else {
-                    console.log('Problema al recuperar datos de selección de productos');
-                    responseMapper.sendGoogleResponse(conv, 'Listado de productos: ' + response.description);
-                }
-            }).then( function (response) {
-                if (response.code === 200) {
-                    let products = response.products;
-                    console.log('Parámetros desde selección de productos obtenidos');
-                    return apiRequests.getEstimatedTransactions(products, tsec);
-                } else {
-                    console.log('Problema al recuperar datos de selección de predicciones');
-                    responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
-                }}).then( function (response) {
-                if (response.code === 200) {
-                    console.log('Respuesta de apiRequest de predicciones: ' + JSON.stringify(response));
-                    //Lógica de estimaciones a recuperar (Filtrados)
-                    let allEstimations = response.estimatedTransactions;
-                    console.log('Predicciones obtenidas: ' + JSON.stringify(allEstimations));
+          let today = new Date();
+          let currentMonth = today.getMonth();
 
-                    let today = new Date();
-                    let currentMonth = today.getMonth();
+          let bestEstimations = allEstimations.filter(item => {
+            return item.forecastedReliability.id === 'T1';
+          }).filter(item => {
+            return item.movementReliability.name === 'ALTA';
+          });
 
-                    let bestEstimations = allEstimations.filter(item => {
-                        return item.forecastedReliability.id === 'T1'
-                    }).filter(item => {
-                        return item.movementReliability.name === 'ALTA'
-                    });
+          console.log('Mejores predicciones: ' + JSON.stringify(bestEstimations));
 
-                    console.log('Mejores predicciones: ' + JSON.stringify(bestEstimations));
+          let currentMonthBestEstimations = bestEstimations.filter(item => {
+            let estimatedDay = new Date(item.transactionDate);
+            return estimatedDay.getMonth() === currentMonth;
+          });
 
-                    let currentMonthBestEstimations = bestEstimations.filter(item => {
-                        let estimatedDay = new Date(item.transactionDate);
-                        return estimatedDay.getMonth() === currentMonth;
-                    });
+          console.log('Mejores predicciones de este mes ' + currentMonth + ': ' + JSON.stringify(currentMonthBestEstimations));
 
-                    console.log('Mejores predicciones de este mes ' + currentMonth + ': ' + JSON.stringify(currentMonthBestEstimations));
-
-                    let [entriesEstimations, expensesEstimations] =
+          let [entriesEstimations, expensesEstimations] =
                         currentMonthBestEstimations.reduce((result, item) => {
-                            result[item.humanCategory.name === 'Ingresos'? 0:1].push(item);
-                            return result;
+                          result[item.humanCategory.name === 'Ingresos' ? 0 : 1].push(item);
+                          return result;
                         }, [[], []]);
 
-                    console.log('Predicciones de ingresos: ' + JSON.stringify(entriesEstimations));
-                    console.log('Predicciones de gastos: ' + JSON.stringify(expensesEstimations));
+          console.log('Predicciones de ingresos: ' + JSON.stringify(entriesEstimations));
+          console.log('Predicciones de gastos: ' + JSON.stringify(expensesEstimations));
 
-                    //Construcción de mensaje de usuario
-                    let responseToUser;
-                    if(entriesEstimations.length > 0) {
-                        let firstEstimation = entriesEstimations[0];
-                        let entryDate = firstEstimation.transactionDate;
-                        let concept = firstEstimation.humanConceptName;
-                        let amount = firstEstimation.amount.amount;
+          // Construcción de mensaje de usuario
+          let responseToUser;
+          if (entriesEstimations.length > 0) {
+            let firstEstimation = entriesEstimations[0];
+            let entryDate = firstEstimation.transactionDate;
+            let concept = firstEstimation.humanConceptName;
+            let amount = firstEstimation.amount.amount;
 
-                        responseToUser = 'El próximo ' + entryDate.toLocaleString('es-ES', { timeZone: 'UTC' }) +
+            responseToUser = 'El próximo ' + entryDate.toLocaleString('es-ES', { timeZone: 'UTC' }) +
                             ' vas a recibir un ingreso con concepto ' + concept.lowerCase() + ' de unos ' + amount + ' euros aproximadamente';
-                    } else {
-                        responseToUser = 'No tienes ninguna previsión para este mes';
-                    }
+          } else {
+            responseToUser = 'No tienes ninguna previsión para este mes';
+          }
 
-                    responseMapper.sendGoogleResponse(conv, responseToUser);
-                } else {
-                    console.log('Problema al recuperar datos de predicciones');
-                    responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
-                }});
+          responseMapper.sendGoogleResponse(conv, responseToUser);
         } else {
-            responseMapper.sendGoogleResponse(conv, 'Faltan parámetros para poder consultar');
+          console.log('Problema al recuperar datos de predicciones');
+          responseMapper.sendGoogleResponse(conv, 'Listado de predicciones: ' + response.description);
         }
-
-    });
-}
+      });
+    } else {
+      responseMapper.sendGoogleResponse(conv, 'Faltan parámetros para poder consultar');
+    }
+  });
+};

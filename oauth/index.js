@@ -6,10 +6,10 @@ var params = query.reduce((obj, pair) => {
   return obj;
 }, {});
 
-function redirect() {
-  var generatedACCESS_TOKEN = '12345';
+function redirect () {
+  var generatedAccessToken = '12345';
   if (params.client_id = 'googlebiconomi') {
     window.location = params.redirect_uri +
-      `#access_token=${generatedACCESS_TOKEN}&token_type=bearer&state=${params.state}`
+      `#access_token=${generatedAccessToken}&token_type=bearer&state=${params.state}`;
   }
 }
