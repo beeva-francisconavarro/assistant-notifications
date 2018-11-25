@@ -4,6 +4,7 @@ const apiRequests = require('../lib/apiRequests');
 
 const secret = '8srWv7w6ER';
 const UserNotFound = { err: 'User not found' };
+const ProductNotFound = { err: 'Products not found' };
 
 module.exports = (req, res) => {
   const username = req.body.username;
@@ -31,13 +32,24 @@ function login (username, password, res) {
   return apiRequests.getGrantingTicket(username, password)
     .then(response => {
       if (response.code === 200) {
-        tsec = response.tsec;
-        customerId = response.customerId;
         token = jwt.encode({ customerId }, secret);
-        return saveLogin(customerId, token);
+        tsec = response.tsec;
+        return {
+          tsec: response.tsec,
+          customerId: response.customerId,
+          token
+        };
       }
       throw UserNotFound;
-    }).then(() => {
+    })
+    .then(({ customerId, tsec }) => apiRequests.getProductsCustomization(customerId, tsec))
+    .then(response => {
+      if (response.code === 200) {
+        return apiRequests.getEstimatedTransactions(response.products, tsec);
+      }
+      throw ProductNotFound;
+    }).then(response => {
+      console.log(response);
       res.json({ generatedAccessToken: token });
       res.status(200).end();
     }).catch(err => {
@@ -47,7 +59,7 @@ function login (username, password, res) {
     });
 }
 
-function saveLogin (customerId, token) {
+function saveLoginTransactions (customerId, token) {
   console.log('Customer id obtenido ' + customerId);
   const transaction = new db.EstimatedTransactions({ token: token });
   return transaction.save();
