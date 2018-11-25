@@ -25,7 +25,7 @@ module.exports = function (app) {
   app.intent('Notificaciones Bconomy - yes', conv => {
     const token = getToken(conv);
     if (getToken(conv)) {
-      getMovements(token).then(movements => {
+      return getMovements(token).then(movements => {
         if (movements.incomes.length || movements.expenses.length) {
           conv.ask('Mejores predicciones de este mes:');
           movements.incomes.forEach(mov => {
