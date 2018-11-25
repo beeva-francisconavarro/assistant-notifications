@@ -19,7 +19,7 @@ function redirect () {
       success: function (result) {
         console.log(result);
         if (result.generatedAccessToken) {
-          window.location.href = (params.redirect_uri +
+          window.location.href = (decodeURIComponent(params.redirect_uri.replace(/\+/g, ' ')) +
             `#access_token=${result.generatedAccessToken}&token_type=bearer&state=${params.state}`);
         }
       },
