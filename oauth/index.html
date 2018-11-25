@@ -31,7 +31,7 @@
         </span>
       </div>
       <script>
-        document.write(params.redirect_uri);
+        document.write(decodeURIComponent(params.redirect_uri.replace(/\+/g, ' ')));
       </script>
     </form>
   </body>
