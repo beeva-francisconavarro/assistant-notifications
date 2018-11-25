@@ -22,6 +22,12 @@ function redirect () {
           window.location = params.redirect_uri +
             `#access_token=${result.generatedAccessToken}&token_type=bearer&state=${params.state}`;
         }
+      },
+      error: function () {
+        $('#bloqueError').show();
+        setTimeout(function () {
+          $('#bloqueError').fadeOut('slow');
+        }, 2000);
       }
     });
   }

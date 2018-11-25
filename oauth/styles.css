@@ -13,6 +13,9 @@ input {
   background-color: #1973B8;
   border: 0px;
   color:  #fff;
+  width: 70%;
+  padding: 0.5em;
+  font-size: 1em;
 }
 .svg-header {
   display: inline-block;
@@ -27,8 +30,11 @@ input {
 .btn-acceder{
   background-color: #02a5a5;
   color: #fff;
-  padding: 0.5em;
+  
   font-weight: 800;
   width: 90%;
   font-size: 1.5rem;
+}
+.error {
+  font-size: 1rem;
 }

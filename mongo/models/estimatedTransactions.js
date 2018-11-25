@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-var estimatedTransactions = new mongoose.Schema({
+var estimatedTransactionsSchema = new mongoose.Schema({
   token: String,
   amount: Number,
   date: Date
 });
 
-mongoose.model('estimatedTransactions', estimatedTransactions);
+mongoose.model('estimatedTransactions', estimatedTransactionsSchema);

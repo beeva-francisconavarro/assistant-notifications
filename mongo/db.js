@@ -1,12 +1,14 @@
 const mongoose = require('mongoose');
 const connectionString = process.env.mongo;
-mongoose.Promise = Promise;
+mongoose.Promise = global.Promise;
 
-require('./models/estimatedTransactions');
+require('./models/EstimatedTransactions');
 
-console.log('Connection to mongodb://' + connectionString);
-mongoose.connect('mongodb://' + connectionString);
+console.log('Connection to ' + connectionString);
+mongoose.connect(connectionString)
+  .then(() => console.log('Connected!'))
+  .catch(err => console.warn('Error connecting ' + JSON.stringify(err)));
 
 module.exports = {
-  estimatedTransactions: mongoose.model('estimatedTransactions')
+  EstimatedTransactions: mongoose.model('estimatedTransactions')
 };
