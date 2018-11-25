@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const connectionString = process.env.mongo;
 mongoose.Promise = global.Promise;
 
-require('./models/EstimatedTransactions');
+require('./models/estimatedTransactions');
 
 console.log('Connection to ' + connectionString);
 mongoose.connect(connectionString)
