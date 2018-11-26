@@ -10,11 +10,12 @@ module.exports = function (app) {
 
   app.intent('movimientos-previstos', conv => {
     const token = getToken(conv);
+    conv.data.count = 0;
     if (getToken(conv)) {
       return getMovements(token).then(movements => {
         if (movements.length) {
-          const mov = movements[0];
-          conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente` +
+          const mov = movements[conv.data.count++];
+          conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
            '¿Deseas ver más movimientos o un resumen?');
           conv.ask(suggestions);
         } else {
@@ -31,9 +32,9 @@ module.exports = function (app) {
     if (getToken(conv)) {
       return getMovements(token).then(movements => {
         if (movements.length) {
-          const mov = movements[1];
+          const mov = movements[conv.data.count];
           conv.ask(
-            `El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente` +
+            `El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
             '¿Deseas ver más movimientos o un resumen?'
           );
           conv.ask(suggestions);
