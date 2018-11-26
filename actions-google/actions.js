@@ -10,12 +10,11 @@ module.exports = function (app) {
 
   app.intent('movimientos-previstos', conv => {
     const token = getToken(conv);
-    conv.parameters.count = 0;
-    console.log(conv.parameters);
+    conv.data.count = 0;
     if (getToken(conv)) {
       return getMovements(token).then(movements => {
         if (movements.length) {
-          const mov = movements[conv.parameters.count++];
+          const mov = movements[conv.data.count++];
           conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
            '¿Deseas ver más movimientos o un resumen?');
           conv.ask(suggestions);
@@ -29,11 +28,12 @@ module.exports = function (app) {
   });
 
   app.intent('movimientos-previstos - ver mas', conv => {
+    console.log(conv.data);
     const token = getToken(conv);
     if (getToken(conv)) {
       return getMovements(token).then(movements => {
         if (movements.length) {
-          const mov = movements[conv.parameters.count++];
+          const mov = movements[conv.data.count++];
           conv.ask(
             `El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
             '¿Deseas ver más movimientos o un resumen?'
