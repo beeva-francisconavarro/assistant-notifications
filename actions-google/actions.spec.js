@@ -10,8 +10,6 @@ describe('actions-google/actions', () => {
   };
 
   beforeEach(() => {
-    // spyOn(db.EstimatedTransactions, 'find')
-    //   .andCallFake(() => []);
     actions(appMock);
   });
 
