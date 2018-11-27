@@ -32,9 +32,9 @@ function login (username, password, res) {
   return apiRequests.getGrantingTicket(username, password)
     .then(response => {
       if (response.code === 200) {
-        token = jwt.encode({ customerId }, secret);
         tsec = response.tsec;
         customerId = response.customerId;
+        token = jwt.encode({ customerId }, secret);
         return {
           tsec,
           customerId,
