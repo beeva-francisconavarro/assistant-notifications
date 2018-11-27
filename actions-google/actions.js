@@ -1,6 +1,9 @@
 const db = require('../mongo/db');
+const jwt = require('jwt-simple');
 const moment = require('moment');
 const { SignIn, Suggestions } = require('actions-on-google');
+
+const secret = '8srWv7w6ER';
 
 module.exports = function (app) {
   const suggestions = new Suggestions([
@@ -60,10 +63,38 @@ module.exports = function (app) {
       conv.ask(new SignIn('Necesito hacer login para continuar'));
     }
   });
+  app.intent('movimientos-previstos - notificaciones', conv => {
+    const token = getToken(conv);
+    const clientID = getClientID(token);
+    if (token && clientID) {
+      const notification = getNotifications(clientID);
+      conv.ask(notification.description);
+    } else {
+      conv.ask('No hay notificaciones');
+    }
+  });
 };
+
 function getToken (conv) {
   if (conv.user.access && conv.user.access.token) {
     return conv.user.access.token;
+  }
+}
+
+function getClientID (token) {
+  var decoded = jwt.decode(token, secret);
+
+  if (decoded) {
+    return decoded.customerId;
+  }
+}
+
+function getNotifications (clientID) {
+  const notification = db.Notification.findOne({ clientID: clientID });
+
+  if (notification) {
+    db.Notification.deleteOne({ clientID: clientID });
+    return notification;
   }
 }
 
