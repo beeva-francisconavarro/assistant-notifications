@@ -2,7 +2,6 @@
 
   
 
-Aplicación para controlar la temperatura a través de la Raspberry Pi
 
   
 
