@@ -17,7 +17,7 @@ module.exports = function (app) {
       return getMovements(token).then(movements => {
         if (movements.length) {
           const mov = movements[0];
-          conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
+          conv.ask(`El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a tener un movimiento con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
            '¿Deseas ver más movimientos o un resumen?');
           conv.ask(suggestions);
         } else {
@@ -36,7 +36,7 @@ module.exports = function (app) {
         if (movements.length) {
           const mov = movements[1];
           conv.ask(
-            `El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un ingreso con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
+            `El próximo día ${moment(mov.dateRange).format('DD')} de ${moment(mov.dateRange).locale('es').format('MMMM')} vas a recibir un movimiento con concepto ${mov.humanConceptName} de unos ${Math.round(mov.amount)} euros aproximadamente. ` +
             '¿Deseas ver más movimientos o un resumen?'
           );
           conv.ask(suggestions);
