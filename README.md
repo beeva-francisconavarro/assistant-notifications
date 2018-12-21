@@ -1,9 +1,6 @@
 # Bconomy with google actions
 
-  
-
-Aplicación para controlar la temperatura a través de la Raspberry Pi
-
+A proof of concept to integrate `my day to day` features on Google Assistant.
   
 
 [![node](https://img.shields.io/badge/node-10.x-brightgreen.svg)]()
